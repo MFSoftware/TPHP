@@ -1,0 +1,12 @@
+unit About;
+
+interface
+
+implementation
+
+procedure core_about;
+begin
+
+end;
+
+end.

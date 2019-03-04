@@ -1,0 +1,102 @@
+unit ToGUI;
+
+interface
+
+uses
+  SysUtils, Classes, Types, Vcl.Controls;
+
+function toID(o: TObject): integer;
+function ToStr(S: PAnsiChar; Len: integer): ansistring; overload;
+function ToStr(V: variant): ansistring; overload;
+function ToStrA(V: variant): ansistring;
+function ToPChar(V: variant): PAnsiChar;
+function toObject(id: integer): TObject;
+function toWControl(id: integer): TWinControl;
+function toControl(id: integer): TControl;
+
+implementation
+
+function ToStrA(V: variant): ansistring;
+begin
+  Result := AnsiString(V);
+end;
+
+function ToStr(S: PAnsiChar; Len: integer): ansistring; overload;
+var
+  i: integer;
+begin
+  Result := '';
+  for i := 0 to len - 1 do
+  begin
+    Inc(S);
+    Result := Result + s^;
+  end;
+end;
+
+function ToStr(V: variant): ansistring;
+begin
+  Result := AnsiString(V);
+end;
+
+function ToPChar(V: variant): PAnsiChar;
+begin
+  Result := PAnsiChar(ToStr(V));
+end;
+
+function toID(o: TObject): integer;
+begin
+  if o = nil then
+    Result := 0
+  else
+    Result := integer(o);
+end;
+
+function toWControl(id: integer): TWinControl;
+begin
+  if id = 0 then
+    Result := nil
+  else
+    Result := TWinControl(integer(id));
+end;
+
+function toControl(id: integer): TControl;
+begin
+  if id = 0 then
+    Result := nil
+  else
+    Result := TControl(integer(id));
+end;
+
+function toComponent(id: integer): TComponent;
+begin
+  if id = 0 then
+    Result := nil
+  else
+    Result := TComponent(integer(id));
+end;
+
+function toObject(id: integer): TObject;
+begin
+  if id = 0 then
+    Result := nil
+  else
+    Result := TObject(integer(id));
+end;
+
+function toInt(V: variant): integer;
+begin
+  if V <> Null then
+    Result := V
+  else
+    Result := 0;
+end;
+
+function toObj(V: variant): TObject; overload;
+begin
+  if V = nil then
+    Result := nil
+  else
+    Result := TObject(integer(ToInt(V)));
+end;
+
+end.

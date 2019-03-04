@@ -1,0 +1,9 @@
+unit About;
+
+interface
+
+implementation
+
+procedure core_aboutl
+
+end.

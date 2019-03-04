@@ -1,0 +1,32 @@
+unit PHPVcl;
+
+interface
+
+uses
+  Vcl.Forms,
+  System.SysUtils,
+  Vcl.Dialogs,
+  TypInfo,
+  Rtti,
+  DelphiFunctions,
+  AZendApi,
+  ZendApi,
+  PHPApi,
+  HZendTypes,
+  ZendTypes,
+  Classes;
+
+procedure form_show(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+implementation
+
+procedure form_show;
+var Id: ppzval;
+begin
+  if ZvalArgsGet(ht, @Id) = SUCCESS then
+    TForm(Id^.value.lval).Show();
+end;
+
+end.

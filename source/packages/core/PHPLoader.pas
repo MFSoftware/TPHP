@@ -1,0 +1,153 @@
+﻿unit PHPLoader;
+
+interface
+
+uses
+  Windows, SysUtils, HZendTypes,
+  WideStrUtils, Variants, Vcl.dialogs, PHPTypes;
+
+const
+  DllPHP = 'php5ts.dll';
+  ZEND_MODULE_API_NO = 0000000;
+
+var
+  PHP5dll: THandle = 0;
+
+procedure LoadPHPFunc(var Func: Pointer; FuncName: LPCSTR);
+procedure UnloadZEND;
+function PHPLibraryName(Instance: THandle; const DefaultName: PAnsiChar = nil)
+  : PAnsiChar;
+function HRESULTStr(h: HRESULT): Pchar;
+function GetSAPIGlobals: Psapi_globals_struct;
+
+implementation
+
+procedure LoadPHPFunc;
+begin
+  if PHP5dll = 0 then
+    if FileExists(string(DllPHP)) then
+    begin
+      PHP5dll := GetModuleHandleA(DllPHP);
+      if PHP5dll = 0 then
+        PHP5dll := LoadLibraryA(DllPHP);
+      if PHP5dll = 0 then
+      begin
+        ShowMessage(HRESULTStr(GetLastError) + #10#13 + '- ' + DllPHP);
+        Exit;
+      end;
+    end;
+
+  Func := GetProcAddress(PHP5dll, FuncName);
+
+  if not assigned(Func) then
+    MessageBoxW(0, Pchar('Unable to link [' + FuncName + '] function'), 'TPHP', 0)
+end;
+
+procedure UnloadZEND;
+begin
+  if PHP5dll <> 0 then
+  begin
+    FreeLibrary(PHP5dll);
+    PHP5dll := 0;
+  end;
+end;
+
+function HRESULTStr(h: HRESULT): Pchar;
+begin
+  FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM,
+    nil, h, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), @Result, 0, nil);
+end;
+
+function shearPosString(const PosA, PosB, str: string): AnsiString;
+function PosAString(const SubStr, s: string; last: Boolean = false): String;
+
+var
+  LenA, LenB, SubStrLen: Integer;
+  B: Boolean;
+begin
+  B := False;
+  SubStrLen := SubStr.Length;
+  LenA := s.Length;
+  Result := s;
+  if last then
+  begin
+    while (LenA > 0) and (not B) do
+    begin
+      B := Copy(s, LenA, SubStrLen) = SubStr;
+      if B then
+        delete(Result, LenA, Result.Length);
+      Dec(LenA);
+    end;
+  end
+  else
+  begin
+    LenB := 0;
+    while (LenB <> LenA) and (not B) do
+    begin
+      B := Copy(s, LenB, SubStrLen) = SubStr;
+      if B then
+      begin
+        if SubStrLen <> 1 then
+          LenB := LenB + SubStrLen;
+        delete(Result, 1, LenB);
+      end;
+      inc(LenB);
+    end;
+  end;
+end;
+
+begin
+  Result := AnsiString(PosAString(PosB, PosAString(PosA, str), true));
+end;
+
+function PHPLibraryName;
+var
+  PName: PAnsiChar;
+begin
+  PName := PAnsiChar(shearPosString('php_', '.dll', ExtractFileName(GetModuleName(Instance))));
+  if PName = nil then
+    Result := DefaultName
+  else
+    Result := PName;
+end;
+
+function GetSAPIGlobals: Psapi_globals_struct;
+var
+  sapi_globals_value: Integer;
+  sapi_globals: Psapi_globals_struct;
+  tsrmls_dc: Pointer;
+begin
+  Result := nil;
+  if assigned(sapi_globals_id) then
+  begin
+    tsrmls_dc := ts_resource_ex(0, nil);
+    sapi_globals_value := Integer(sapi_globals_id^);
+    asm
+      mov ecx, sapi_globals_value
+      mov edx, dword ptr tsrmls_dc
+      mov eax, dword ptr [edx]
+      mov ecx, dword ptr [eax+ecx*4-4]
+      mov sapi_globals, ecx
+    end;
+    Result := sapi_globals;
+  end;
+end;
+
+initialization
+
+LoadPHPFunc(@get_zend_version, 'get_zend_version');
+LoadPHPFunc(@zend_alter_ini_entry, 'zend_alter_ini_entry');
+LoadPHPFunc(@ts_resource_ex, 'ts_resource_ex');
+LoadPHPFunc(@php_request_startup, 'php_request_startup');
+LoadPHPFunc(@php_request_shutdown, 'php_request_shutdown');
+LoadPHPFunc(@php_execute_script, 'php_execute_script');
+LoadPHPFunc(sapi_globals_id, 'sapi_globals_id');
+LoadPHPFunc(core_globals_id, 'core_globals_id');
+LoadPHPFunc(@tsrm_startup, 'tsrm_startup');
+LoadPHPFunc(@sapi_startup, 'sapi_startup');
+LoadPHPFunc(@php_module_startup, 'php_module_startup');
+LoadPHPFunc(@zend_error, 'zend_error');
+LoadPHPFunc(@_zend_bailout, '_zend_bailout');
+LoadPHPFunc(@ZvalArgsGet, 'zend_get_parameters_ex');
+
+end.

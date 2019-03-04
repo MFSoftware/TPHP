@@ -1,0 +1,16 @@
+unit About;
+
+interface
+
+uses Vcl.Dialogs;
+
+procedure core_about;
+
+implementation
+
+procedure core_about;
+begin
+  ShowMessage();
+end;
+
+end.
