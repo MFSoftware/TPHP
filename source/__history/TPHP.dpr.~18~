@@ -118,9 +118,7 @@ begin
       begin
         WriteLn('TPHP by MagicFun (based on CodeThurst)');
         WriteLn('Usage: TPHP <filename.php>');
-        WriteLn('');
-        WriteLn('Comand line interface:');
-        WriteLn(' Show this help message: TPHP -h');
+        WriteLn('Comand line interface: TPHP <filename.php>');
       end;
     end
     else

@@ -9,6 +9,14 @@ RAD Studio version: 10.3 Rio.
 3. It remains only to put php5ts.dll version 5.3 and up and above near TPHP.exe. PHP 5.6.38 is present by default..
 
 # Runing
+By default (when no params) engine run file "core/include.php".
+To run other file you can execute the command:
 ```bat
 TPHP.exe <path/to/php.script>
+```
+
+# Comand line interface
+If you need to display help message, you can execute the command:
+```bat
+TPHP.exe -h
 ```
