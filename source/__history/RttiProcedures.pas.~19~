@@ -63,13 +63,22 @@ end;
 procedure gui_propSet;
 var
   IntObj, PropName, Value: ppzval;
+  RttiProperty: TRttiProperty;
 begin
   if ZvalArgsGet(ht, @IntObj, @PropName, @Value) = SUCCESS then
 	begin
-    case Value^._type of
+    RttiProperty := TRttiContext
+		.Create
+		.GetType(TApplication)
+		.GetProperty(String(PropName^.value.str.val));
+
+    if not RttiProperty.IsWritable then
+      Exit;
+
+		case Value^._type of
 			IS_LONG:
 				TypInfo.SetPropValue(TObject(AZendApi.Z_INTVAL(IntObj)), AZendApi.Z_STRVAL(PropName), Value^.value.lval);
-			IS_STRING:
+			IS_STRING: 
 				TypInfo.SetPropValue(TObject(AZendApi.Z_INTVAL(IntObj)), AZendApi.Z_STRVAL(PropName), String(Value^.value.str.val));
 			IS_BOOL:
 				TypInfo.SetPropValue(TObject(AZendApi.Z_INTVAL(IntObj)), AZendApi.Z_STRVAL(PropName), zend_bool(Value^.value.lval));

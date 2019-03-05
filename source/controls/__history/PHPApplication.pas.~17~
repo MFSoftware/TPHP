@@ -2,7 +2,9 @@ unit PHPApplication;
 
 interface
 
-uses ZendApi, ZendTypes, HZendTypes, AZendApi, Rtti, Vcl.Forms;
+uses ZendApi, ZendTypes, HZendTypes, AZendApi, Rtti, Vcl.Forms, WinApi.Windows, SysUtils;
+
+function GetConsoleWindow : HWND; stdcall; external 'kernel32.dll';
 
 procedure application_initialize();
 procedure application_minimize();
@@ -17,13 +19,17 @@ procedure application_get_title(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
 
+procedure application_showConsoleWindow(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
 procedure application_run();
 
-procedure ct_gui_Application_SetterHandler(ht: Integer; return_value: pzval;
+procedure application_setterHandler(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
   
-procedure ct_gui_Application_GetterHandler(ht: Integer; return_value: pzval;
+procedure application_getterHandler(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
 
@@ -42,6 +48,21 @@ end;
 procedure application_restore;
 begin
   Application.Restore;
+end;
+
+procedure application_showConsoleWindow;
+var
+  Value: ppzval;
+begin
+  if ZvalArgsGet(ht, @Value) = SUCCESS then
+  begin
+    case zend_bool(Value^.value.lval) of
+      True:
+        ShowWindow(GetConsoleWindow, SW_SHOW);
+          False:
+            ShowWindow(GetConsoleWindow, SW_HIDE);
+    end;
+  end;
 end;
 
 procedure application_get_title;
@@ -67,7 +88,7 @@ begin
   Application.Run;
 end;
   
-procedure ct_gui_Application_SetterHandler;
+procedure application_setterHandler;
 var
   PropName: ppzval;
   PropValue: ppzval;
@@ -90,7 +111,7 @@ begin
 	end;
 end;
   
-procedure ct_gui_Application_GetterHandler;
+procedure application_getterHandler;
 var
   PropName: ppzval;
   RttiProperty: TRttiProperty;

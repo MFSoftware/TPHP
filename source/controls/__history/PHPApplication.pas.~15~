@@ -57,11 +57,10 @@ begin
   if ZvalArgsGet(ht, @Value) = SUCCESS then
   begin
     case zend_bool(Value^.value.lval) of
-      True:
-        ShowWindow(GetConsoleWindow, SW_SHOW);
-      False:
-        ShowWindow(GetConsoleWindow, SW_HIDE);
-    end;
+          True:
+            ShowWindow(GetConsoleWindow, SW_SHOW);
+          False:
+            ShowWindow(GetConsoleWindow, SW_HIDE);
   end;
 end;
 

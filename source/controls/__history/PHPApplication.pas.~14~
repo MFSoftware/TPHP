@@ -56,11 +56,21 @@ var
 begin
   if ZvalArgsGet(ht, @Value) = SUCCESS then
   begin
-    case zend_bool(Value^.value.lval) of
-      True:
-        ShowWindow(GetConsoleWindow, SW_SHOW);
-      False:
-        ShowWindow(GetConsoleWindow, SW_HIDE);
+    case Value^._type of
+			IS_LONG:
+				case Value^.value.lval of
+          1:
+            ShowWindow(GetConsoleWindow, SW_SHOW);
+          0:
+            ShowWindow(GetConsoleWindow, SW_HIDE);
+			IS_BOOL:
+				case zend_bool(Value^.value.lval) of
+          True:
+            ShowWindow(GetConsoleWindow, SW_SHOW);
+          False:
+            ShowWindow(GetConsoleWindow, SW_HIDE);
+        end;
+        end;
     end;
   end;
 end;

@@ -22,7 +22,7 @@ begin
   Engine.DefineFunction('gui_formSetMain', @gui_formSetMain);
   Engine.DefineFunction('gui_methodExists', @gui_methodExists);
   Engine.DefineFunction('gui_methodsList', @gui_methodsList);
-  //Engine.DefineFunction('gui_invokeMethod', @gui_invokeMethod);
+  Engine.DefineFunction('gui_invokeMethod', @gui_methodExists);
   Engine.DefineFunction('gui_destroy', @gui_destroy);
   Engine.DefineFunction('gui_create', @gui_create);
   Engine.DefineFunction('gui_class', @gui_class);
@@ -32,7 +32,7 @@ begin
   Engine.DefineFunction('form_show', @form_show);
 
   Engine.DefineFunction('application_initialize', @application_initialize);
-  Engine.DefineFunction('application_showConsoleWindow', @application_showConsoleWindow);
+  Engine.DefineFunction('application_initialize', @application_initialize);
   Engine.DefineFunction('application_terminate', @application_terminate);
   Engine.DefineFunction('application_minimize', @application_minimize);
   Engine.DefineFunction('application_restore', @application_restore);
@@ -42,7 +42,7 @@ begin
   Engine.DefineFunction('application_setterHandler', @application_setterHandler);
   Engine.DefineFunction('application_getterHandler', @application_getterHandler);
 
-  Engine.DefineFunction('messagebox', @gui_messagebox_show);
+  Engine.DefineFunction('messagebox_show', @gui_messagebox_show);
   Engine.DefineFunction('showMessage', @gui_showmessage);
 end;
 

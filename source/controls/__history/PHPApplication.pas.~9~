@@ -23,7 +23,7 @@ procedure application_setterHandler(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
   
-procedure ct_gui_Application_GetterHandler(ht: Integer; return_value: pzval;
+procedure application_getterHandler(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
 
@@ -90,7 +90,7 @@ begin
 	end;
 end;
   
-procedure ct_gui_Application_GetterHandler;
+procedure application_getterHandler;
 var
   PropName: ppzval;
   RttiProperty: TRttiProperty;

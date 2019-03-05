@@ -1,5 +1,7 @@
 <?php
 
+application_showConsoleWindow(false);
+
 $form = gui_create('TForm');
 gui_propSet($form, 'caption', 'PHP Version: ' . phpversion());
 
