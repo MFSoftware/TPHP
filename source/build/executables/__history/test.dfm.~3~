@@ -1,0 +1,26 @@
+object TForm
+  Left = 454
+  Top = 250
+  Caption = 'Test Studio'
+  ClientHeight = 201
+  ClientWidth = 304
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poDesigned
+  Visible = True
+  PixelsPerInch = 96
+  TextHeight = 13
+  object TBitBtn
+    Left = 10
+    Top = 15
+    Width = 75
+    Height = 25
+    Caption = 'Hello, world!'
+    TabOrder = 0
+  end
+end

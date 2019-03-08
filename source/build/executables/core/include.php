@@ -1,18 +1,17 @@
 <?php
 
-application_showConsoleWindow(false);
+$form = gui_create('TForm', 0);
+gui_propSet($form, 'width', 300);
+gui_propSet($form, 'height', 300);
 
-$form = gui_create('TForm');
-gui_propSet($form, 'caption', 'PHP Version: ' . phpversion());
-
-$btn = gui_create('TBitBtn');
-gui_propSet($btn, 'caption', 'Hello, world!');
+$btn = gui_create('TButton', $form);
 gui_setParent($btn, $form);
+gui_propSetEnum($btn, 'Align', 'alLeft');
 
 application_initialize();
 
 gui_formSetMain($form);
-form_show($form);
+gui_invokeMethod($form, 'show', null);
 
 application_run();
 

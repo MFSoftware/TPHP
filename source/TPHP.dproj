@@ -91,7 +91,7 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-        <DCC_UnitSearchPath>packages\core;controls;.;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>src\packages\core;src\controls;src\;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
         <DCC_DcuOutput>build/dcus</DCC_DcuOutput>
@@ -101,16 +101,17 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="RttiProcedures.pas"/>
-        <DCCReference Include="EngineController.pas"/>
-        <DCCReference Include="DelphiFunctions.pas"/>
-        <DCCReference Include="packages\core\AZendApi.pas"/>
-        <DCCReference Include="packages\core\HZendTypes.pas"/>
-        <DCCReference Include="packages\core\PHPAPI.pas"/>
-        <DCCReference Include="packages\About.pas"/>
-        <DCCReference Include="packages\PHPVcl.pas"/>
-        <DCCReference Include="controls\PHPApplication.pas"/>
-        <DCCReference Include="controls\PHPMessages.pas"/>
+        <DCCReference Include="src\RttiProcedures.pas"/>
+        <DCCReference Include="src\EngineController.pas"/>
+        <DCCReference Include="src\DelphiFunctions.pas"/>
+        <DCCReference Include="src\packages\core\AZendApi.pas"/>
+        <DCCReference Include="src\packages\core\HZendTypes.pas"/>
+        <DCCReference Include="src\packages\core\PHPAPI.pas"/>
+        <DCCReference Include="src\packages\About.pas"/>
+        <DCCReference Include="src\controls\PHPApplication.pas"/>
+        <DCCReference Include="src\controls\PHPMessages.pas"/>
+        <DCCReference Include="src\packages\PHPControls.pas"/>
+        <DCCReference Include="src\packages\core\PHPCommons.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -142,6 +143,12 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
+                <DeployFile LocalName="build\executables\TPHP.exe" Configuration="Release" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>TPHP.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="$(BDS)\Redist\osx64\libcgsqlite3.dylib" Class="DependencyModule">
                     <Platform Name="OSX64">
                         <Overwrite>true</Overwrite>
@@ -170,12 +177,6 @@
                 </DeployFile>
                 <DeployFile LocalName="$(BDS)\Redist\osx32\libcgsqlite3.dylib" Class="DependencyModule">
                     <Platform Name="OSX32">
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="build\TPHP.exe" Configuration="Release" Class="ProjectOutput">
-                    <Platform Name="Win32">
-                        <RemoteName>TPHP.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>

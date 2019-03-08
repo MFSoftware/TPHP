@@ -1,0 +1,243 @@
+unit GUIWorks;
+
+interface
+
+uses
+  TypInfo,
+  Vcl.Forms,
+  SysUtils,
+  Vcl.Controls,
+  ZendTypes,
+  HZendTypes,
+  ZendApi,
+  PHPApi,
+  RttiProcedures,
+  System.Classes,
+  Rtti;
+
+procedure gui_parent(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_destroy(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_create(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_class(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_getHandle(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_formSetMain(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_setParent(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_invokeMethod(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure class_create(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_getParent(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+implementation
+  
+procedure gui_destroy;
+var Obj: ppzval;
+begin
+  if ZvalArgsGet(ht, @Obj) = SUCCESS then
+		TControl(Obj^.value.lval).Free;
+end;
+
+procedure gui_parent;
+var
+  Obj: ppzval;
+  Owner: ppzval;
+begin
+  if ZvalArgsGet(ht, @Obj, @Owner) = SUCCESS then
+  begin
+    if Owner^._type = IS_NULL then
+      ZVAL_LONG(return_value, Integer(TControl(Obj^.value.lval).Parent))
+    else
+      TControl(Obj^.value.lval).Parent := TWinControl(Owner^.value.lval)
+  end;
+end;
+
+procedure gui_getHandle;
+var
+  Id: ppzval;
+begin
+  if ZvalArgsGet(ht, @Id) = SUCCESS then
+  begin
+    if TObject(Id^.value.lval) is TWinControl then
+      ZVAL_LONG(return_value, TWinControl(Id^.value.lval).Handle)
+    else
+      ZVAL_LONG(return_value, 0);
+  end;
+end;
+
+function createComponent(aClass: AnsiString; aOwner: Integer): Integer;
+var
+  Owner: TComponent;
+  Component: TComponentClass;
+begin
+  try
+    if aOwner = 0 then
+      Owner := nil
+    else
+      Owner := TComponent(TObject(aOwner));
+    Component := TComponentClass(GetClass(String(aClass)));
+    if (Component <> nil) then
+      Result := Integer(TComponentClass(Component).Create(Owner))
+    else
+      Result := 0;
+  except
+    Result := 0;
+  end;
+end;
+
+function createClass(aClass: AnsiString): Integer;
+var
+  Component: TComponentClass;
+begin
+  try
+    Component := TComponentClass(GetClass(String(aClass)));
+    if (Component <> nil) then
+      Result := Integer(TPersistentClass(Component).Create)
+    else
+      Result := 0;
+  except
+    Result := 0;
+  end;
+end;
+
+procedure class_create;
+var
+  ClassName: ppzval;
+begin
+  if ZvalArgsGet(ht, @ClassName) = SUCCESS then
+    ZVAL_LONG(return_value, createClass(ClassName^.value.str.val));
+end;
+
+procedure gui_create;
+var
+  ClassName: ppzval;
+  Owner: ppzval;
+begin
+  if ZvalArgsGet(ht, @ClassName, @Owner) = SUCCESS then
+    ZVAL_LONG(return_value, createComponent(ClassName^.value.str.val, Owner^.value.lval));
+end;
+
+procedure gui_invokeMethod;
+var
+  Id: ppzval;
+  MethodName: ppzval;
+  Args: ppzval;
+  RContext: TRttiContext;
+  RType: TRttiType;
+  RMethod: TRttiMethod;
+  ArgsArray: array of TValue;
+  Tmp: pppzval;
+  I: Integer;
+begin
+  if ZvalArgsGet(ht, @Id, @MethodName, @Args) = SUCCESS then
+  begin
+    RType := RContext.GetType(GetClass(TObject(Id^.value.lval).ClassName));
+    for RMethod in RType.GetMethods do
+      if (RMethod.Parent = RType) and (RMethod.Name = String(MethodName^.value.str.val)) then
+      begin
+        if not Args^._type = IS_NULL then
+        begin
+          I := -1;
+          while True do
+          begin
+            I := I + 1;
+            SetLength(ArgsArray, I);
+            zend_hash_index_find(Args^.value.ht, I, Tmp);
+
+            if Tmp^^^._type = IS_NULL then
+              Break;
+
+            case Tmp^^^._type of
+			        IS_STRING:
+				        ArgsArray[I] := String(Tmp^^^.value.str.val);
+			        IS_LONG:
+				        ArgsArray[I] := Tmp^^^.value.lval;
+              IS_BOOL:
+                ArgsArray[I] := zend_bool(Tmp^^^.value.lval);
+		        end;
+          end;
+
+          RMethod.Invoke(TClass(Id^.value.lval), ArgsArray);
+        end
+        else
+          RMethod.Invoke(TClass(Id^.value.lval), TValue.Empty);
+      end;
+  end;
+end;
+
+procedure gui_class;
+var
+  Id: ppzval;
+begin
+  if ZvalArgsGet(ht, @Id) = SUCCESS then
+  begin
+    if TObject(Id^.value.lval) is TForm then
+      ZVAL_STRINGW(return_value, PWideChar('TForm'), False)
+    else
+      ZVAL_STRINGW(return_value, PWideChar(TObject(Id^.value.lval).ClassName), False);
+  end;
+end;
+
+procedure gui_setParent;
+var
+  Id: ppzval;
+  Owner: ppzval;
+begin
+  if ZvalArgsGet(ht, @Id, @Owner) = SUCCESS then
+    TControl(Id^.value.lval).Parent := TWinControl(Owner^.value.lval);
+end;
+
+procedure gui_getParent;
+var
+  Id: ppzval;
+begin
+  if ZvalArgsGet(ht, @Id) = SUCCESS then
+    ZVAL_LONG(return_value, Integer(TControl(Id^.value.lval).Parent));
+end;
+
+procedure gui_formSetMain;
+var
+  Id: ppzval;
+  Obj: TObject;
+  P: Pointer;
+begin
+  if ZvalArgsGet(ht, @Id) = SUCCESS then
+  begin
+    Obj := TObject(Id^.value.lval);
+    if (Obj = nil) or not (Obj is TForm) then
+      ZVAL_FALSE(return_value)
+    else
+    begin
+      P := @Application.Mainform;
+      Pointer(P^) := TForm(Obj);
+    end;
+  end;
+end;
+
+end.

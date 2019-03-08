@@ -1,9 +1,0 @@
-unit About;
-
-interface
-
-implementation
-
-procedure core_about;
-
-end.

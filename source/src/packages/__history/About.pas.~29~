@@ -1,0 +1,20 @@
+unit About;
+
+interface
+
+uses Vcl.Dialogs, Classes, ZendTypes, HZendTypes;
+
+procedure core_about;
+
+procedure core_registerClass(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+implementation
+
+procedure core_about;
+begin
+  ShowMessage('Created by MFSoftware in 2019');
+end;
+
+end.

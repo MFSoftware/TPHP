@@ -1,0 +1,33 @@
+unit PHPCommons;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
+  ZendTypes, ZendAPI, PHPTypes, PHPAPI;
+
+type
+  TPHPHeader = class(TCollectionItem)
+    private
+     FHeader : String;
+    published
+     property Header : string read FHeader write FHeader;
+    end;
+
+  TPHPHeaders = class(TCollection)
+     private
+      FOwner : TComponent;
+      procedure SetItem(Index: Integer; const Value: TPHPHeader);
+      function  GetItem(Index: Integer): TPHPHeader;
+    protected
+      function  GetOwner : TPersistent; override;
+    public
+      function Add: TPHPHeader;
+      constructor Create(AOwner: TComponent);
+      function GetHeaders : AnsiString;
+      property Items[Index: Integer]: TPHPHeader read GetItem write SetItem; default;
+    end;
+
+implementation
+
+end.

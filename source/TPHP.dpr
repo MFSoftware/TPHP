@@ -14,16 +14,17 @@ uses
   Vcl.Dialogs,
   System.UITypes,
   ZendApi,
-  RttiProcedures in 'RttiProcedures.pas',
-  EngineController in 'EngineController.pas',
-  DelphiFunctions in 'DelphiFunctions.pas',
-  AZendApi in 'packages\core\AZendApi.pas',
-  HZendTypes in 'packages\core\HZendTypes.pas',
-  PHPAPI in 'packages\core\PHPAPI.pas',
-  About in 'packages\About.pas',
-  PHPVcl in 'packages\PHPVcl.pas',
-  PHPApplication in 'controls\PHPApplication.pas',
-  PHPMessages in 'controls\PHPMessages.pas';
+  RttiProcedures in 'src\RttiProcedures.pas',
+  EngineController in 'src\EngineController.pas',
+  DelphiFunctions in 'src\DelphiFunctions.pas',
+  AZendApi in 'src\packages\core\AZendApi.pas',
+  HZendTypes in 'src\packages\core\HZendTypes.pas',
+  PHPAPI in 'src\packages\core\PHPAPI.pas',
+  About in 'src\packages\About.pas',
+  PHPApplication in 'src\controls\PHPApplication.pas',
+  PHPMessages in 'src\controls\PHPMessages.pas',
+  PHPControls in 'src\packages\PHPControls.pas',
+  PHPCommons in 'src\packages\core\PHPCommons.pas';
 
 procedure zend_error_cb2(AType: Integer; const AFname: PAnsiChar; const ALineNo: UINT; const AFormat: PAnsiChar; Args: va_list)cdecl;
 var
@@ -87,14 +88,17 @@ var
 
 begin
   try
+    SetConsoleTitle('TPHP Engine');
+
     Engine := TPHPEngine.Create(nil);
+    //Engine.RegisterColors := True;
     Engine.IniPath := 'php.ini';
 
-    EngineController.DefineAllFunctions(Engine);
-    EngineController.DefineAllClasses(Engine);
+    DefineAllFunctions(Engine);
+    DefineAllClasses(Engine);
 
     Engine.StartupEngine;
-    php := TEngineCt();
+    PHP := TEngineCt();
 
     tmp := GetProcAddress(PHP5dll, 'zend_error_cb');
     asm
@@ -108,15 +112,25 @@ begin
         php.RunFile('core/include.php')
       else
       begin
+        WriteLn('TPHP by MagicFun (based on CodeThurst)');
         WriteLn('Usage: TPHP <filename.php>');
+        WriteLn('');
+        WriteLn('Comand line interface:');
+        WriteLn(' Show this help message: TPHP -h');
         Halt(1);
       end;
     end
     else if (ParamCount = 1) then
     begin
-      if (ParamStr(1) = '-h') or (ParamStr(1) = '-help') or (ParamStr(1) = '-?') then
+      if (ParamStr(1) = '-h') or (ParamStr(1) = '-help') or (ParamStr(1) = '-?') or (ParamStr(1) = '/h') or (ParamStr(1) = '/help') or (ParamStr(1) = '/?') then
       begin
-        WriteLn('TPHP by MagicFun (based on CodeThurst)');
+        WriteLn('_____________________  ___ _____________ ');
+        WriteLn('\__    ___/\______   \/   |   \______   \');
+        WriteLn('  |    |    |     ___/    ~    \     ___/');
+        WriteLn('  |    |    |    |   \    Y    /    |    ');
+        WriteLn('  |____|    |____|    \___|_  /|____|    ');
+        WriteLn('                            \/           ');
+        WriteLn(' by MagicFun (based on CodeThurst)');
         WriteLn('Usage: TPHP <filename.php>');
         WriteLn('');
         WriteLn('Comand line interface:');
@@ -136,10 +150,9 @@ begin
       end;
     end;
 
-    php.ShutdownRequest;
-
+    PHP.ShutdownRequest;
   except
     on E: Exception do
-      Writeln(E.ClassName, ': ', E.Message);
+      MessageDlg(E.ClassName + ': ' + E.Message, mtError, [mbOk], 0);
   end;
 end.

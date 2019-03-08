@@ -1,0 +1,70 @@
+unit PHPCommons;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
+  ZendTypes, ZendAPI, PHPTypes, PHPAPI;
+
+type
+  TPHPHeader = class(TCollectionItem)
+  private
+    FHeader : String;
+  published
+    property Header : string read FHeader write FHeader;
+  end;
+
+  TPHPHeaders = class(TCollection)
+     private
+      FOwner : TComponent;
+      procedure SetItem(Index: Integer; const Value: TPHPHeader);
+      function  GetItem(Index: Integer): TPHPHeader;
+    protected
+      function  GetOwner : TPersistent; override;
+    public
+      function Add: TPHPHeader;
+      constructor Create(AOwner: TComponent);
+      function GetHeaders : AnsiString;
+      property Items[Index: Integer]: TPHPHeader read GetItem write SetItem; default;
+    end;
+
+implementation
+
+function TPHPHeaders.Add: TPHPHeader;
+begin
+  result := TPHPHeader(inherited Add);
+end;
+
+constructor TPHPHeaders.Create(AOwner: TComponent);
+begin
+ inherited create(TPHPHeader);
+ FOwner := AOwner;
+end;
+
+function TPHPHeaders.GetItem(Index: Integer): TPHPHeader;
+begin
+  Result := TPHPHeader(inherited GetItem(Index));
+end;
+
+procedure TPHPHeaders.SetItem(Index: Integer; const Value: TPHPHeader);
+begin
+  inherited SetItem(Index, Value)
+end;
+
+function TPHPHeaders.GetOwner : TPersistent;
+begin
+  Result := FOwner;
+end;
+
+function TPHPHeaders.GetHeaders: AnsiString;
+var i : integer;
+begin
+  for i := 0 to Count - 1 do
+    begin
+      Result := Result + Items[i].FHeader;
+      if i < Count - 1 then
+        Result := Result + #13#10;
+    end;
+end;
+
+end.
