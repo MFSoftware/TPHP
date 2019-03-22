@@ -28,7 +28,7 @@ var
   Text: ppzval;
   Inf: ppzval;
 begin
-  if (ZvalArgsGet(ht, @Caption, @Text, @Inf) = SUCCESS) then
+  if (ZvalArgsGet(ht, @Text, @Caption, @Inf) = SUCCESS) then
     ZVAL_LONG(return_value, MessageBoxA(Application.Handle, PAnsiChar(Text^.value.str.val), PAnsiChar(Caption^.value.str.val), Inf^.value.lval));
 end;
 
@@ -36,9 +36,17 @@ procedure gui_showmessage;
 var
   Text: ppzval;
 begin
-//TODO: Добавить проверку типов тк при выводе цифр, они превращаются в билиберду.
   if (ZvalArgsGet(ht, @Text) = SUCCESS) then
-    ShowMessage(String(Text^.value.str.val));
+  begin
+    case Text^._type of
+			IS_STRING:
+				ShowMessage(String(Text^.value.str.val));
+			IS_LONG:
+				ShowMessage(IntToStr(Text^.value.lval));
+			IS_BOOL:
+				ShowMessage(BoolToStr(zend_bool(Text^.value.str.val), True));
+		end;
+  end;
 end;
 
 end.

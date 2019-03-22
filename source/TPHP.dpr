@@ -98,7 +98,7 @@ begin
     DefineAllClasses(Engine);
 
     Engine.StartupEngine;
-    PHP := TEngineCt();
+    PHP := GetPHPEngine();
 
     tmp := GetProcAddress(PHP5dll, 'zend_error_cb');
     asm

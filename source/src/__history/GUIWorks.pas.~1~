@@ -51,10 +51,6 @@ procedure gui_getParent(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
 
-procedure gui_is(ht: Integer; return_value: pzval;
-  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
-  TSRMLS_DC: pointer); cdecl;
-
 implementation
   
 procedure gui_destroy;
@@ -188,19 +184,6 @@ begin
       ZVAL_STRINGW(return_value, PWideChar('TForm'), False)
     else
       ZVAL_STRINGW(return_value, PWideChar(TObject(Id^.value.lval).ClassName), False);
-  end;
-end;
-
-procedure gui_is;
-var
-  CL: TClass;
-  Id: ppzval;
-  ClassName: ppzval;
-begin
-  if ZvalArgsGet(ht, @Id, @ClassName) = SUCCESS then
-  begin
-    CL := GetClass(String(ClassName^.value.str.val));
-    ZVAL_BOOL(return_value, (CL <> NIL) and (Id^.value.lval <> 0) and (TObject(Id^.value.lval) is CL));
   end;
 end;
 

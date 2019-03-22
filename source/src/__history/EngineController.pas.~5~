@@ -3,7 +3,7 @@ unit EngineController;
 interface
 
 uses
-  TPHPFunction, RttiProcedures, GUIWorks, ZendTypes, ZendApi, HZendTypes, Vcl.Buttons, PHPControls, Vcl.ExtCtrls,
+  TPHPFunction, RttiProcedures, GUIWorks, ZendTypes, ZendApi, HZendTypes, Vcl.Buttons, PHPControls,
   PHPApplication, PHPMessages, Classes, Vcl.Forms, Vcl.StdCtrls, CommCtrl, About, Vcl.Dialogs, Vcl.Graphics;
 
 procedure DefineAllFunctions(Engine: TPHPEngine);
@@ -56,7 +56,7 @@ end;
 
 procedure DefineAllClasses;
 begin
-  RegisterClasses([TButton, TForm, TLabel, TBitBtn, TStringList, TPanel]);
+  RegisterClasses([TButton, TForm, TLabel, TBitBtn, TStringList]);
 end;
 
 end.

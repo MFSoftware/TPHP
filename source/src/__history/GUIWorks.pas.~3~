@@ -51,7 +51,7 @@ procedure gui_getParent(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
 
-procedure gui_is(ht: Integer; return_value: pzval;
+procedure gui_getParent(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
 

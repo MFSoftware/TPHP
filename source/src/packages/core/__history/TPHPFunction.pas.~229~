@@ -4,12 +4,35 @@ interface
 
 uses Windows, Messages, SysUtils, Classes, Vcl.Dialogs, Vcl.Graphics,
   Vcl.Forms, ZendTypes, PHPTypes, PHPLoader, HZendTypes, Variants, Rtti,
-  WideStrUtils, AnsiStrings, PHPCommons;
+  WideStrUtils, AnsiStrings, PHPCommons, System.UITypes;
 
 type
   TPHPRequestType = (prtGet, prtPost);
 
 type
+  TpsvCustomPHP = class(TComponent)
+  private
+    FBuffer: TMemoryStream;
+    FVirtualStream: TMemoryStream;
+    FPostStream: TMemoryStream;
+    FRequestType: TPHPRequestType;
+  protected
+    ActiveMode: boolean;
+  public
+    TSRMLS_D: pointer;
+    UseDelimiters: Boolean;
+    FTerminated: boolean;
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    function Execute: AnsiString; overload;
+    function RunCode(ACode: AnsiString): AnsiString; overload;
+    function RunFile(AFile: AnsiString): AnsiString; overload;
+    procedure StartupRequest;
+    procedure ShutdownRequest;
+    property RequestType: TPHPRequestType read FRequestType write FRequestType
+      default prtGet;
+  end;
+
   TPHPEngine = class(TComponent, IUnknown)
   private
   protected
@@ -28,37 +51,12 @@ type
     procedure DefineConstant(Name, Value: PAnsiChar);
   published
   end;
-
-  TpsvCustomPHP = class(TComponent)
-  private
-    FBuffer: TMemoryStream;
-    FVirtualStream: TMemoryStream;
-    FPostStream: TMemoryStream;
-    FRequestType: TPHPRequestType;
-    FHeaders : TPHPHeaders;
-    procedure SetHeaders(Value : TPHPHeaders);
-  protected
-    ActiveMode: boolean;
-  public
-    TSRMLS_D: pointer;
-    FTerminated: boolean;
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
-    function Execute: AnsiString; overload;
-    function RunCode(ACode: AnsiString): AnsiString; overload;
-    function RunFile(AFile: AnsiString): AnsiString; overload;
-    procedure StartupRequest;
-    procedure ShutdownRequest;
-    property Headers : TPHPHeaders read FHeaders write SetHeaders;
-    property RequestType: TPHPRequestType read FRequestType write FRequestType
-      default prtGet;
-  end;
-
-var
-  PEngineCt: TpsvCustomPHP;
   
+var
+  PEngine: TpsvCustomPHP;
+
 procedure ZAIniE2(n, v: PAnsiChar);
-function TEngineCt(): TpsvCustomPHP;
+function GetPHPEngine(): TpsvCustomPHP;
 
 implementation
 
@@ -107,11 +105,66 @@ const
     (Value: clInfoBk; Name: 'clInfoBk'),
     (Value: clNone; Name: 'clNone'));
 
-function TEngineCt(): TpsvCustomPHP;
+procedure zend_error_cb2(AType: Integer; const AFname: PAnsiChar; const ALineNo: UINT; const AFormat: PAnsiChar; Args: va_list)cdecl;
+var
+  LText: string;
+  LBuffer: array [0 .. 4096] of AnsiChar;
 begin
-  if PEngineCt = nil then
-    PEngineCt := TpsvCustomPHP.Create(nil);
-  Result := PEngineCt;
+  case AType of
+    E_ERROR:
+      LText := 'Fatal Error in ';
+    E_WARNING:
+      LText := 'Warning in ';
+    E_CORE_ERROR:
+      LText := 'Core Error in ';
+    E_CORE_WARNING:
+      LText := 'Core Warning in ';
+    E_COMPILE_ERROR:
+      LText := 'Compile Error in ';
+    E_COMPILE_WARNING:
+      LText := 'Compile Warning in ';
+    E_USER_ERROR:
+      LText := 'User Error in ';
+    E_USER_WARNING:
+      LText := 'User Warning in ';
+    E_RECOVERABLE_ERROR:
+      LText := 'Recoverable Error in ';
+    E_PARSE:
+      LText := 'Parse Error in ';
+    E_NOTICE:
+      LText := 'Notice in ';
+    E_USER_NOTICE:
+      LText := 'User Notice in ';
+    E_STRICT:
+      LText := 'Strict Error in ';
+    E_CORE:
+      LText := 'Core Error in ';
+  else
+    LText := 'Unknown Error(' + inttostr(AType) + '): ';
+  end;
+
+  wvsprintfA(LBuffer, AFormat, Args);
+
+  LText := LText + UTF8ToAnsi(AFname) + '(' + inttostr(ALineNo) + '): ' + String(LBuffer);
+
+  case AType of
+    E_WARNING, E_CORE_WARNING, E_COMPILE_WARNING, E_USER_WARNING:
+      MessageDlg(LText, mtWarning, [mbOk], 0);
+    E_NOTICE, E_USER_NOTICE:
+      MessageDlg(LText, mtInformation, [mbOk], 0);
+  else
+    begin
+      MessageDlg(LText, mtError, [mbOk], 0);
+      _zend_bailout(AFname, ALineNo);
+    end;
+  end;
+end;
+
+function GetPHPEngine(): TpsvCustomPHP;
+begin
+  if PEngine = nil then
+    PEngine := TpsvCustomPHP.Create(nil);
+  Result := PEngine;
 end;
 
 procedure ZAIniE2(n, v: PAnsiChar);
@@ -119,23 +172,8 @@ begin
   zend_alter_ini_entry(n, Length(n), v, Length(v), ZEND_INI_SYSTEM, ZEND_INI_STAGE_RUNTIME);
 end;
 
-procedure TpsvCustomPHP.SetHeaders(Value: TPHPHeaders);
-begin
-  FHeaders.Assign(Value);
-end;
-
 function php_delphi_send_header(p1, TSRMLS_DC : pointer) : Integer; cdecl;
-var
- php: TpsvCustomPHP;
- gl: psapi_globals_struct;
 begin
-  gl := GetSAPIGlobals;
-  php := TpsvCustomPHP(gl^.server_context);
-  if Assigned(p1) and Assigned(php) then
-  begin
-    with php.Headers.Add do
-      Header := String(Psapi_header_struct(p1)^.header);
-  end;
   Result := SAPI_HEADER_SENT_SUCCESSFULLY;
 end;
 
@@ -298,6 +336,9 @@ begin
     Result := '';
   end;
 
+  if UseDelimiters and (Pos('<?', String(ACode)) = 0) then
+    ACode := AnsiString(Format('<? %s ?>', [ACode]));
+
   FBuffer.Clear;
 
   try
@@ -353,7 +394,7 @@ end;
 
 procedure TPHPEngine.DefineConstant(Name, Value: PAnsiChar);
 begin
-  zend_register_string_constant(Name, AnsiStrings.StrLen(Name) - 1, Value, CONST_PERSISTENT or CONST_CS, 0, TSRMLS_D);
+  zend_register_string_constant(Name, AnsiStrings.StrLen(Name) + 1, Value, CONST_PERSISTENT or CONST_CS, 0, TSRMLS_D);
 end;
 
 constructor TPHPEngine.Create(AOwner: TComponent);
@@ -367,7 +408,7 @@ begin
   inherited;
 end;
 
-function LogMessageError(_message: PAnsiChar; TSRMLS_D: pointer): integer; cdecl;
+function LogMessageError(_message: PAnsiChar; TSRMLS_D: pointer): Integer; cdecl;
 begin
   Result := 0;
   MessageBox(Application.Handle, PWideChar(WideString(_message)), '[TPHP Engine]', MB_ICONERROR);
@@ -392,12 +433,7 @@ begin
   begin
     php := TpsvCustomPHP(gl^.server_context);
     if Assigned(php) then
-    begin
-      try
-        Result := php.FBuffer.Write(str^, len);
-      except
-      end;
-    end;
+      Result := php.FBuffer.Write(str^, len);
   end;
 end;
 
@@ -410,8 +446,8 @@ begin
   begin
     for I := Low(Colors) to High(Colors) do
     begin
-     ColorName := AnsiString(Colors[i].Name);
-     //zend_register_long_constant( PAnsiChar(ColorName), AnsiStrings.strlen(PAnsiChar(ColorName)) + 1, Colors[i].Value, CONST_PERSISTENT or CONST_CS, 0, TSRMLS_DÑ);
+      ColorName := AnsiString(Colors[i].Name);
+      zend_register_long_constant( PAnsiChar(ColorName), AnsiStrings.strlen(PAnsiChar(ColorName)) + 1, Colors[i].Value, CONST_PERSISTENT or CONST_CS, 0, ts_resource_ex(0, nil));
     end;
   end;
   
