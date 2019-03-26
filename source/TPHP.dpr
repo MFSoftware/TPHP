@@ -24,7 +24,10 @@ uses
   PHPApplication in 'src\controls\PHPApplication.pas',
   PHPMessages in 'src\controls\PHPMessages.pas',
   PHPControls in 'src\packages\PHPControls.pas',
-  PHPCommons in 'src\packages\core\PHPCommons.pas';
+  PHPCommons in 'src\packages\core\PHPCommons.pas',
+  PHPConsole in 'src\controls\PHPConsole.pas',
+  AboutForm in 'src\forms\AboutForm.pas' {Form1},
+  ZendArray in 'src\packages\core\ZendArray.pas';
 
 procedure zend_error_cb2(AType: Integer; const AFname: PAnsiChar; const ALineNo: UINT; const AFormat: PAnsiChar; Args: va_list)cdecl;
 var
@@ -83,7 +86,7 @@ end;
 
 var
   Engine: TPHPEngine;
-  PHP: TpsvCustomPHP;
+  Php: TpsvCustomPHP;
   Tmp: Pointer;
 
 begin
@@ -91,16 +94,16 @@ begin
     SetConsoleTitle('TPHP Engine');
 
     Engine := TPHPEngine.Create(nil);
-    //Engine.RegisterColors := True;
     Engine.IniPath := 'php.ini';
 
     DefineAllFunctions(Engine);
     DefineAllClasses(Engine);
 
     Engine.StartupEngine;
-    PHP := GetPHPEngine();
 
-    tmp := GetProcAddress(PHP5dll, 'zend_error_cb');
+    Php := GetPHPEngine();
+
+    Tmp := GetProcAddress(PHP5dll, 'zend_error_cb');
     asm
       mov edx, dword ptr [tmp]
       mov dword ptr [edx], offset zend_error_cb2
@@ -109,7 +112,7 @@ begin
     if ParamCount = 0 then
     begin
       if FileExists('core/include.php') then
-        php.RunFile('core/include.php')
+        Write(php.RunFile('core/include.php'))
       else
       begin
         WriteLn('TPHP by MagicFun (based on CodeThurst)');
@@ -140,17 +143,17 @@ begin
     else
     begin
       if FileExists('core/include.php') then
-        php.RunFile('core/include.php')
+        Write(Php.RunFile('core/include.php'))
       else
       begin
         if FileExists(ParamStr(1)) then
-          Write(php.RunFile(AnsiString(ParamStr(1))))
+          Write(Php.RunFile(AnsiString(ParamStr(1))))
         else
           WriteLn('File "'+ ParamStr(1) +'" not found.');
       end;
     end;
 
-    PHP.ShutdownRequest;
+    Php.ShutdownRequest;
   except
     on E: Exception do
       MessageDlg(E.ClassName + ': ' + E.Message, mtError, [mbOk], 0);

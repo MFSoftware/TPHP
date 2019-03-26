@@ -2,28 +2,14 @@ unit PHPApplication;
 
 interface
 
-uses ZendApi, ZendTypes, HZendTypes, AZendApi, Rtti, Vcl.Forms, WinApi.Windows, SysUtils;
+uses ZendApi, ZendTypes, HZendTypes, AZendApi, Rtti, Vcl.Forms, WinApi.Windows, SysUtils,
+     Classes, TypInfo;
 
-function GetConsoleWindow : HWND; stdcall; external 'kernel32.dll';
-
-procedure application_initialize();
-procedure application_minimize();
-procedure application_restore();
-procedure application_terminate();
-
-procedure application_set_title(ht: Integer; return_value: pzval;
-  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
-  TSRMLS_DC: pointer); cdecl;
-
-procedure application_get_title(ht: Integer; return_value: pzval;
-  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
-  TSRMLS_DC: pointer); cdecl;
+function GetConsoleWindow: HWND; stdcall; external 'kernel32.dll';
 
 procedure application_showConsoleWindow(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
-
-procedure application_run();
 
 procedure application_setterHandler(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
@@ -33,22 +19,15 @@ procedure application_getterHandler(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
 
+procedure application_invokeMethod(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure application_formSetMain(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
 implementation
-
-procedure application_initialize;
-begin
-  Application.Initialize;
-end;
-
-procedure application_minimize;
-begin
-  Application.Minimize;
-end;
-
-procedure application_restore;
-begin
-  Application.Restore;
-end;
 
 procedure application_showConsoleWindow;
 var
@@ -63,29 +42,6 @@ begin
         ShowWindow(GetConsoleWindow, SW_HIDE);
     end;
   end;
-end;
-
-procedure application_get_title;
-begin
-  ZVAL_STRINGW(return_value, PWideChar(Application.Title), False);
-end;
-
-procedure application_set_title;
-var
-  Title: ppzval;
-begin
-  if ZvalArgsGet(ht, @Title) = SUCCESS then
-    Application.Title := String(Title^.value.str.val);
-end;
-
-procedure application_terminate;
-begin
-  Application.Terminate;
-end;
-
-procedure application_run;
-begin
-  Application.Run;
 end;
   
 procedure application_setterHandler;
@@ -122,8 +78,70 @@ begin
 		.Create
 		.GetType(TApplication)
 		.GetProperty(String(PropName^.value.str.val));
-		ZVAL_STRINGW(return_value, PWideChar(RttiProperty.GetValue(Application).ToString), false);
+		ZVAL_STRINGW(return_value, PWideChar(RttiProperty.GetValue(Application).ToString), False);
 	end;
 end;
+
+procedure application_invokeMethod;
+var
+  MethodName: ppzval;
+  Args: ppzval;
+  RContext: TRttiContext;
+  RType: TRttiType;
+  I: Integer;
+  ArgsArray: array of TValue;
+  Tmp: pppzval;
+begin
+  if ZvalArgsGet(ht, @MethodName, @Args) = SUCCESS then
+  begin
+    RType := RContext.GetType(Application.ClassInfo);
+    if not Args^._type = IS_NULL then
+    begin
+      Tmp := nil;
+      I := -1;
+      while True do
+      begin
+        I := I + 1;
+        SetLength(ArgsArray, I);
+        zend_hash_index_find(Args^.value.ht, I, Tmp);
+
+        if Tmp^^^._type = IS_NULL then
+          Break;
+
+        case Tmp^^^._type of
+          IS_STRING:
+            ArgsArray[I] := String(Tmp^^^.value.str.val);
+          IS_LONG:
+            ArgsArray[I] := Tmp^^^.value.lval;
+          IS_BOOL:
+            ArgsArray[I] := zend_bool(Tmp^^^.value.lval);
+        end;
+      end;
+      RType.GetMethod(String(MethodName^.value.str.val)).Invoke(Application, ArgsArray);
+    end
+    else
+      RType.GetMethod(String(MethodName^.value.str.val)).Invoke(Application, []);
+  end;
+end;
+
+procedure application_formSetMain;
+var
+  Id: ppzval;
+  Obj: TObject;
+  P: Pointer;
+begin
+  if ZvalArgsGet(ht, @Id) = SUCCESS then
+  begin
+    Obj := TObject(Id^.value.lval);
+    if (Obj = nil) or not (Obj is TForm) then
+      ZVAL_FALSE(return_value)
+    else
+    begin
+      P := @Application.Mainform;
+      Pointer(P^) := TForm(Obj);
+    end;
+  end;
+end;
+
 
 end.

@@ -23,11 +23,7 @@ var
   _zend_bailout: procedure(filename: PAnsiChar; lineno: uint); cdecl;
   ZvalArgsGet: function(param_count: Integer; Args: ppzval): Integer; cdecl varargs;
   zend_hash_index_find: function(ht: PHashTable; h: ulong; pData: Pointer): Integer; cdecl;
-  call_user_function : function(function_table: PHashTable; object_pp: pzval; function_name: pzval; return_ptr: pzval; param_count: zend_uint; params: pzval_array_ex; TSRMLS_DC: Pointer): integer; cdecl;
-  zend_register_long_constant: procedure(name: PAnsiChar; name_len: uint; lval: Longint; flags: Integer; module_number: Integer; TSRMLS_DC: Pointer); cdecl;
-  zend_register_double_constant: procedure(name: PAnsiChar; name_len: uint; dval: Double; flags: Integer; module_number: Integer; TSRMLS_DC: Pointer); cdecl;
-  zend_register_string_constant: procedure(name: PAnsiChar; name_len: uint; strval: PAnsiChar; flags: Integer; module_number: Integer; TSRMLS_DC: Pointer); cdecl;
-  zend_register_stringl_constant: procedure(name: PAnsiChar; name_len: uint; strval: PAnsiChar; strlen: uint; flags: Integer; module_number: Integer; TSRMLS_DC: Pointer); cdecl;
+  call_user_function : function(function_table: PHashTable; object_pp: pzval; function_name: pzval; return_ptr: pzval; param_count: zend_uint; params: pzval_array_ex; TSRMLS_DC: Pointer): integer; cdecl;  zend_register_stringl_constant: procedure(name: PAnsiChar; name_len: uint; strval: PAnsiChar; strlen: uint; flags: Integer; module_number: Integer; TSRMLS_DC: Pointer); cdecl;
   zend_register_constant: function(var c: zend_constant; TSRMLS_DC: Pointer): Integer; cdecl;
   php_register_variable: procedure(_var : PAnsiChar; val: PAnsiChar; track_vars_array: pointer; TSRMLS_DC : pointer); cdecl;
 

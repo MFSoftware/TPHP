@@ -2,7 +2,7 @@ unit About;
 
 interface
 
-uses Vcl.Dialogs, Classes, ZendTypes, HZendTypes;
+uses Vcl.Dialogs, Vcl.Forms, Classes, ZendTypes, HZendTypes, AboutForm;
 
 procedure core_about;
 
@@ -10,7 +10,8 @@ implementation
 
 procedure core_about;
 begin
-  ShowMessage('Created by MFSoftware in 2019');
+  Application.CreateForm(TForm1, Form1);
+  Form1.Show;
 end;
 
 end.

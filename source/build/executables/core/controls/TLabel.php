@@ -1,0 +1,7 @@
+<?
+
+class TLabel extends TComponent {
+	
+}
+
+?>

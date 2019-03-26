@@ -734,16 +734,13 @@ type
    refcount : integer;
    constants_updated : zend_bool;
    ce_flags : zend_uint;
-
    function_table : THashTable;
    default_properties : THashTable;
    properties_info : THashTable;
    default_static_members : THashTable;
-
    static_members : PHashTable;
    constants_table : THashTable;
    builtin_functions : pointer;
-
    _constructor : PZendFunction;
    _destructor :  PZendFunction;
    clone : PZendFunction;
@@ -765,25 +762,19 @@ type
    unserialize_func : PZendFunction;
   // {$ENDIF}
    iterator_funcs : zend_class_iterator_funcs;
-
    create_object : pointer;
    get_iterator : pointer;
    interface_gets_implemented : pointer;
-
    get_static_method : pointer;
-
    serialize : pointer;
    unserialize : pointer;
-
    interfaces : pointer;
    num_interfaces : zend_uint;
-
    filename : PAnsiChar;
    line_start : zend_uint;
    line_end : zend_uint;
    doc_comment : PAnsiChar;
    doc_comment_len : zend_uint;
-
    module : pointer;
   end;
   {$ENDIF}

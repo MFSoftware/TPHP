@@ -1,0 +1,7 @@
+<?
+
+class TButton extends TComponent {
+	
+}
+
+?>

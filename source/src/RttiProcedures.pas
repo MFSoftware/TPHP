@@ -52,7 +52,89 @@ procedure gui_propSetEnum(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
 
+procedure gui_setObjectEvent(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_eventExists(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_findControl(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_propType(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
+procedure gui_methodParams(ht: Integer; return_value: pzval;
+  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
+  TSRMLS_DC: pointer); cdecl;
+
 implementation
+
+function getMethodParams(classname: string; method: string): String;
+var
+  ctx     : TRttiContext;
+  lType   : TRttiType;
+  lMethod : TRttiMethod;
+  b       : integer;
+  x       : Rtti.TRttiParameter;
+  ParamName: String;
+  params: TArray<TRttiParameter>;
+
+begin
+  lType := nil;
+  Result := 'void';
+  ctx := TRttiContext.Create;
+  b := 0;
+  if( Assigned(GetClass(classname)) ) then
+    lType:=ctx.GetType(GetClass(classname));
+  try
+    if Assigned(lType) then
+      begin
+       lMethod:=lType.GetMethod(method);
+
+       if Assigned(lMethod) then
+       begin
+        if lMethod.IsStatic or lMethod.IsConstructor or lMethod.IsDestructor then
+          begin
+            Result := '!';
+            Exit;
+          end;
+       end
+       else
+       begin
+          params := lMethod.GetParameters;
+          if not Assigned(params) then
+            Exit;
+
+          for x in params do
+          begin
+          if not Assigned(x) then Exit;
+
+          if (not x.Name.IsEmpty) then
+            begin
+              ParamName := '$';
+              if (b > 0) and (Length(params)>1) then Result := Result + ', ';
+              b := b + 1;
+
+              if pfConst in x.Flags then Result := Result + 'constant ';
+              if pfArray in x.Flags then Result := Result + 'array ';
+              if pfOut in x.Flags then Result := Result + '&';
+              if pfAddress in x.Flags then ParamName := '&$';
+              if not Assigned(x.ParamType) then Exit;
+
+              Result := Result + x.ParamType.ToString() + ' ' + ParamName + x.Name;
+            end;
+          end;
+      end;
+      end;
+  finally
+    ctx.Free();
+  end;
+end;
 
 procedure gui_propGetEnum;
 var
@@ -72,22 +154,92 @@ begin
   end;
 end;
 
+procedure gui_setObjectEvent;
+var
+  IntObj: ppzval;
+  EventName: ppzval;
+  FunctionHandle: ppzval;
+  //Method: TMethod;
+  //LProp: TRttiContext;
+  //ObjClass: TClass;
+begin
+  if ZvalArgsGet(ht, @IntObj, @EventName, @FunctionHandle) = SUCCESS then
+  begin
+    //ObjClass := TObject(IntObj^.value.lval).ClassType;
+    //LProp := TRttiContext.Create();
+    //LProp.GetType(ObjClass).AsInstance.GetProperty('OnClick').SetValue(TObject(IntObj^.value.lval), TValue.From<TForm>(FunctionHandle^.value.lval));
+  end;
+end;
+
+procedure gui_eventExists;
+var
+  IntObj: ppzval;
+  EventName: ppzval;
+begin
+  if ZvalArgsGet(ht, @IntObj, @EventName) = SUCCESS then
+    ZVAL_BOOL(return_value, GetMethodProp(TObject(IntObj^.value.lval), String(EventName^.value.str.val)).Code = nil);
+end;
+
+procedure gui_findControl;
+var
+  ClassName: ppzval;
+  RContext: TRttiContext;
+begin
+  if ZvalArgsGet(ht, @ClassName) = SUCCESS then
+    ZVAL_LONG(return_value, Integer(RContext.FindType(String(ClassName^.value.str.val))));
+end;
+
+procedure gui_propType;
+var
+  IntObj: ppzval;
+  PropName: ppzval;
+  Obj: TObject;
+  PropInfo: PPropInfo;
+  RContext: TRttiContext;
+  RProperty: TRttiProperty;
+begin
+  if ZvalArgsGet(ht, @IntObj, @PropName) = SUCCESS then
+  begin
+    Obj := TObject(IntObj^.value.lval);
+    PropInfo := GetPropInfo(Obj, String(PropName^.value.str.val));
+    if PropInfo <> nil then
+      ZVAL_LONG(return_value, Integer(PropInfo^.PropType^.Kind))
+    else
+    begin
+      RContext :=  TRttiContext.Create();
+      RProperty := RContext.GetType(Obj.ClassType).GetProperty(String(PropName^.value.str.val));
+      if RProperty <> nil then
+      begin
+        if Assigned(RProperty.PropertyType) then
+          ZVAL_LONG(return_value, Integer(RProperty.PropertyType.TypeKind));
+        RProperty.Free;
+      end;
+      RContext.Free;
+    end;
+  end;
+end;
+
 procedure gui_propSetEnum;
 var
   IntObj, PropName, Value: ppzval;
 begin
   if ZvalArgsGet(ht, @IntObj, @PropName, @Value) = SUCCESS then
 	begin
-    {if not IsWritable then
-      ZVAL_FALSE(return_value);}
-
     case Value^._type of
       IS_LONG:
-        SetEnumProp(TObject(AZendApi.Z_INTVAL(IntObj)), AZendApi.Z_STRVAL(PropName), IntToStr(Value^.value.lval));
+        SetEnumProp(TObject(IntObj^.value.lval), AZendApi.Z_STRVAL(PropName), IntToStr(Value^.value.lval));
 			IS_STRING:
-				SetEnumProp(TObject(AZendApi.Z_INTVAL(IntObj)), AZendApi.Z_STRVAL(PropName), String(Value^.value.str.val));
+				SetEnumProp(TObject(IntObj^.value.lval), AZendApi.Z_STRVAL(PropName), String(Value^.value.str.val));
 		end;
 	end;
+end;
+
+procedure gui_methodParams;
+var
+  IntObj, MethodName: ppzval;
+begin
+  if ZvalArgsGet(ht, @IntObj, @MethodName) = SUCCESS then
+	  ZVAL_STRINGW(return_value, PWideChar(getMethodParams(TObject(IntObj^.value.lval).ClassName, String(MethodName^.value.str.val))), False);
 end;
 
 procedure gui_propGet;
@@ -97,9 +249,9 @@ var
   Value: String;
 begin
   if ZvalArgsGet(ht, @IntObj, @PropName) = SUCCESS then
-    begin
-      Value := GetPropValue(TObject(AZendApi.Z_INTVAL(IntObj)), AZendApi.Z_STRVAL(PropName));
-	  case DelphiFunctions.is_numeric(Value) of
+  begin
+    Value := GetPropValue(TObject(AZendApi.Z_INTVAL(IntObj)), AZendApi.Z_STRVAL(PropName));
+	  case is_numeric(Value) of
       True:
         ZVAL_LONG(return_value, StrToInt(Value));
       False:
@@ -129,20 +281,24 @@ end;
 procedure gui_propSet;
 var
   IntObj, PropName, Value: ppzval;
+  Obj: TObject;
 begin
   if ZvalArgsGet(ht, @IntObj, @PropName, @Value) = SUCCESS then
 	begin
-    {if not IsWritable then
-      ZVAL_FALSE(return_value);}
-
+    Obj := TObject(IntObj^.value.lval);
     case Value^._type of
-			IS_LONG:
-				SetPropValue(TObject(AZendApi.Z_INTVAL(IntObj)), AZendApi.Z_STRVAL(PropName), Value^.value.lval);
-			IS_STRING:
-				SetPropValue(TObject(AZendApi.Z_INTVAL(IntObj)), AZendApi.Z_STRVAL(PropName), String(Value^.value.str.val));
-			IS_BOOL:
-				SetPropValue(TObject(AZendApi.Z_INTVAL(IntObj)), AZendApi.Z_STRVAL(PropName), zend_bool(Value^.value.lval));
-		end;
+      IS_LONG:
+      begin
+        {if TObject(Value^.value.lval) <> nil then
+          SetObjectProp(Obj, String(PropName^.value.str.val), TObject(Value^.value.lval))
+        else     }
+          SetPropValue(Obj, String(PropName^.value.str.val), Value^.value.lval);
+      end;
+      IS_STRING:
+        SetPropValue(Obj, String(PropName^.value.str.val), String(Value^.value.str.val));
+      IS_BOOL:
+        SetPropValue(Obj, String(PropName^.value.str.val), zend_bool(Value^.value.lval));
+    end;
 	end;
 end;
 
@@ -153,7 +309,7 @@ var
 begin
   if ZvalArgsGet(ht, @IntObj, @PropName) = SUCCESS then
   begin
-    if IsPublishedProp(TObject(AZendApi.Z_INTVAL(IntObj)), AZendApi.Z_STRVAL(PropName)) = true then
+    if IsPublishedProp(TObject(IntObj^.value.lval), AZendApi.Z_STRVAL(PropName)) then
       ZVAL_TRUE(return_value)
 		else
       ZVAL_FALSE(return_value);

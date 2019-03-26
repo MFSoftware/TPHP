@@ -1,6 +1,7 @@
 # TPHP
 PHP Engine written in Pascal. PHP version required 5.3+ and up.
 This engine is based on [CodeThurst](https://github.com/RooviTech/CodeThurst/).
+Some **ZendApi** functions were taken from the [PHP4Delphi](https://github.com/perevoznyk/php4delphi) repository and some **gui_** functions (like gui_methodParams, gui_propType) from [SoulEngine](https://github.com/KashaketCompany/soulengine/) repo.
 
 # Building 
 RAD Studio version: 10.3 Rio.

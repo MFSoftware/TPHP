@@ -1,22 +1,26 @@
 <?
-test();
-$form = gui_create('TForm', 0);
-gui_propSet($form, 'width', 300);
-gui_propSet($form, 'height', 300);
 
-$btn1 = gui_create('TButton', $form);
-gui_setParent($btn1, $form);
-gui_propSetEnum($btn1, 'align', 'alLeft');
+require_once('core/start.php');
 
-$btn2 = gui_create('TButton', $form);
-gui_setParent($btn2, $form);
-gui_propSetEnum($btn2, 'align', 'alRight');
+application::initialize();
 
-application_initialize();
+$mainForm = new TForm();
+$mainForm->caption = 'Form Caption';
+$mainForm->show();
 
-gui_formSetMain($form);
-gui_invokeMethod($form, 'show', null);
+$panel = new TPanel();
 
-application_run();
+file_put_contents('test.txt', gui_methodParams($mainForm->handle, 'show'));
+
+$button = new TButton($mainForm);
+$button->align = 'alLeft';
+$button->width = $mainForm->width / 2;
+$button->caption = 'PHP Version: ' . phpversion();
+gui_setParent($button->handle, $panel->handle);
+gui_setParent($panel->handle, $mainForm->handle);
+
+application::setMainForm($mainForm);
+
+application::run();
 
 ?>

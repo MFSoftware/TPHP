@@ -291,6 +291,7 @@ var
     TSRMLS_DC: Pointer); cdecl;
 
   zend_register_constant                          : function(var c: zend_constant; TSRMLS_DC: Pointer): Integer; cdecl;
+  zend_array_size: function(zend_array: pzval): Integer; cdecl;
 
   zend_register_auto_global : function(name: PAnsiChar; name_len: uint; callback: Pointer; TSRMLS_DC: Pointer): Integer; cdecl;
 
@@ -301,20 +302,16 @@ procedure REGISTER_MAIN_STRINGL_CONSTANT(name: PAnsiChar; str: PAnsiChar; len: u
 
 
 var
-  tsrm_startup                                    : function(expected_threads: integer;
+  tsrm_startup: function(expected_threads: integer;
     expected_resources: integer; debug_level: integer; debug_filename: PAnsiChar): integer; cdecl;
 
   ts_allocate_id                                  : function(rsrc_id: pts_rsrc_id; size: size_t; ctor: pointer; dtor: pointer): ts_rsrc_id; cdecl;
-  // deallocates all occurrences of a given id
   ts_free_id                                      : procedure(id: ts_rsrc_id); cdecl;
-
   tsrm_shutdown                                   : procedure(); cdecl;
   ts_resource_ex                                  : function(id: integer; p: pointer): pointer; cdecl;
   ts_free_thread                                  : procedure; cdecl;
-
   zend_error                                      : procedure(ErrType: integer; ErrText: PAnsiChar); cdecl;
   zend_error_cb                                   : procedure; cdecl;
-
   zend_eval_string                                : function(str: PAnsiChar; val: pointer; strname: PAnsiChar; tsrm: pointer): integer; cdecl;
   zend_make_compiled_string_description           : function(a: PAnsiChar; tsrm: pointer): PAnsiChar; cdecl;
 
@@ -330,12 +327,9 @@ var
   {$ENDIF}
 
 var
-  zend_print_variable                             : function(val: pzval): integer; cdecl;
-
-
+  zend_print_variable: function(val: pzval): integer; cdecl;
   zend_get_compiled_filename : function(TSRMLS_DC: Pointer): PAnsiChar; cdecl;
   zend_get_compiled_lineno   : function(TSRMLS_DC: Pointer): integer; cdecl;
-
 
 {$IFDEF PHP4}
 function zval_copy_ctor(val : pzval) : integer;
@@ -348,19 +342,12 @@ procedure zenderror(Error : PAnsiChar);
 
 var
   zend_stack_init                                 : function(stack: Pzend_stack): Integer; cdecl;
-
   zend_stack_push                                 : function(stack: Pzend_stack; element: Pointer; size: Integer): Integer; cdecl;
-
   zend_stack_top                                  : function(stack: Pzend_stack; element: Pointer): Integer; cdecl;
-
   zend_stack_del_top                              : function(stack: Pzend_stack): Integer; cdecl;
-
   zend_stack_int_top                              : function(stack: Pzend_stack): Integer; cdecl;
-
   zend_stack_is_empty                             : function(stack: Pzend_stack): Integer; cdecl;
-
   zend_stack_destroy                              : function(stack: Pzend_stack): Integer; cdecl;
-
   zend_stack_base                                 : function(stack: Pzend_stack): Pointer; cdecl;
 
   zend_stack_count                                : function(stack: Pzend_stack): Integer; cdecl;
@@ -368,9 +355,6 @@ var
   zend_stack_apply                                : procedure(stack: Pzend_stack; _type: Integer; apply_function: Integer); cdecl;
 
   zend_stack_apply_with_argument                  : procedure(stack: Pzend_stack; _type: Integer; apply_function: Integer; arg: Pointer); cdecl;
-
-
-  //zend_operators.h
 
 var
   _convert_to_string                              : procedure(op: pzval; __zend_filename: PAnsiChar; __zend_lineno: uint); cdecl;
@@ -700,8 +684,6 @@ var
 const
   MSCRT = 'msvcrt.dll';
 
-//Microsoft C++ functions
-
 {$IFDEF PHP4}
 function  pipe(phandles : pointer; psize : uint; textmode : integer) : integer; cdecl; external MSCRT name '_pipe';
 procedure close(AHandle : THandle); cdecl; external MSCRT name '_close';
@@ -725,7 +707,7 @@ procedure CheckZendErrors;
 {$ENDIF}
 
 var
-  PHPLib : THandle = 0;
+  PHPLib: THandle = 0;
 
 var
  zend_ini_deactivate : function(TSRMLS_D : pointer) : integer; cdecl;
@@ -759,15 +741,13 @@ function Z_OBJ_HT(z : Pzval) : pzend_object_handlers;
 function Z_OBJPROP(z : Pzval) : PHashtable;
 function Z_VARREC(z: pzval): TVarRec;
 
- procedure zend_addref_p(z: pzval); cdecl;
- procedure my_class_add_ref(aclass: Ppzend_class_entry); cdecl;
- procedure copy_zend_constant(C: PZendConstant); cdecl;
-
+procedure zend_addref_p(z: pzval); cdecl;
+procedure my_class_add_ref(aclass: Ppzend_class_entry); cdecl;
+procedure copy_zend_constant(C: PZendConstant); cdecl;
 
 {$ENDIF}
 
 implementation
-
 
 function zend_hash_add(ht : PHashTable; arKey : PAnsiChar; nKeyLength : uint; pData : pointer; nDataSize : uint; pDest : pointer) : integer; cdecl;
 begin
@@ -816,7 +796,6 @@ begin
     else
      Result := nil;
 end;
-
 
 procedure REGISTER_MAIN_LONG_CONSTANT(name: PAnsiChar; lval: longint; flags: integer; TSRMLS_DC: Pointer);
 begin
@@ -955,11 +934,7 @@ end;
 procedure ZVAL_EMPTY_STRING(z: pzval);
 begin
   z^.value.str.len := 0;
- // {$IFDEF PHP510}
   z^.value.str.val := STR_EMPTY_ALLOC;
-  (*{$ELSE}
-  z^.value.str.val := '';
-  {$ENDIF}*)
   z^._type := IS_STRING;
 end;
 
@@ -991,7 +966,6 @@ begin
   end;
 end;
 
-
 function LoadZEND(const DllFilename: AnsiString = PHPWin) : boolean;
 var
   WriteFuncPtr  : pointer;
@@ -1003,10 +977,7 @@ begin
 
 {$IFNDEF QUIET_LOAD}
   if PHPLib = 0 then
-  begin
    RaiseLastOSError;
-  // raise Exception.Create(RaiseLastOSError);
-  end;
 {$ELSE}
   if PHPLib = 0 then Exit;
 {$ENDIF}
@@ -1191,9 +1162,6 @@ begin
 
   // -- zend_hash_copy
   zend_hash_copy := GetProcAddress(PHPLib, 'zend_hash_copy');
-
-
-  // -- zend_hash_sort
   zend_hash_sort := GetProcAddress(PHPLib, 'zend_hash_sort');
 
   // -- zend_hash_compare
@@ -1228,6 +1196,7 @@ begin
 
   // -- zend_register_constant
   zend_register_constant := GetProcAddress(PHPLib, 'zend_register_constant');
+  zend_array_size := GetProcAddress(PHPLib, 'zend_array_size');
 
   zend_register_auto_global := GetProcAddress(PHPLib, 'zend_register_auto_global');
 

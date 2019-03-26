@@ -1,0 +1,7 @@
+<?
+
+class TBitBtn extends TComponent {
+	
+}
+
+?>

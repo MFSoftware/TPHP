@@ -1,0 +1,7 @@
+<?
+
+class TForm extends TComponent {
+	
+}
+
+?>

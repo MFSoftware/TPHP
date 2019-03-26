@@ -31,10 +31,6 @@ procedure gui_getHandle(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
 
-procedure gui_formSetMain(ht: Integer; return_value: pzval;
-  return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
-  TSRMLS_DC: pointer); cdecl;
-
 procedure gui_setParent(ht: Integer; return_value: pzval;
   return_value_ptr: ppzval; this_ptr: pzval; return_value_used: Integer;
   TSRMLS_DC: pointer); cdecl;
@@ -173,7 +169,7 @@ begin
           RMethod.Invoke(TClass(Id^.value.lval), ArgsArray);
         end
         else
-          RMethod.Invoke(TClass(Id^.value.lval), TValue.Empty);
+          RMethod.Invoke(TClass(Id^.value.lval), []);
       end;
   end;
 end;
@@ -193,14 +189,17 @@ end;
 
 procedure gui_is;
 var
-  CL: TClass;
+  Tmp: TClass;
   Id: ppzval;
   ClassName: ppzval;
 begin
   if ZvalArgsGet(ht, @Id, @ClassName) = SUCCESS then
   begin
-    CL := GetClass(String(ClassName^.value.str.val));
-    ZVAL_BOOL(return_value, (CL <> NIL) and (Id^.value.lval <> 0) and (TObject(Id^.value.lval) is CL));
+    Tmp := GetClass(String(ClassName^.value.str.val));
+    if (Tmp <> NIL) and (Id^.value.lval <> 0) and (TObject(Id^.value.lval) is Tmp) then
+      ZVAL_TRUE(return_value)
+    else
+      ZVAL_FALSE(return_value);
   end;
 end;
 
@@ -219,25 +218,6 @@ var
 begin
   if ZvalArgsGet(ht, @Id) = SUCCESS then
     ZVAL_LONG(return_value, Integer(TControl(Id^.value.lval).Parent));
-end;
-
-procedure gui_formSetMain;
-var
-  Id: ppzval;
-  Obj: TObject;
-  P: Pointer;
-begin
-  if ZvalArgsGet(ht, @Id) = SUCCESS then
-  begin
-    Obj := TObject(Id^.value.lval);
-    if (Obj = nil) or not (Obj is TForm) then
-      ZVAL_FALSE(return_value)
-    else
-    begin
-      P := @Application.Mainform;
-      Pointer(P^) := TForm(Obj);
-    end;
-  end;
 end;
 
 end.
